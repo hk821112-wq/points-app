@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>點數換算器</title>
+
+<style>
+/* ===== 基本樣式 ===== */
+body {
+    font-family: -apple-system, BlinkMacSystemFont;
+    background: #000;
+    color: #fff;
+    margin: 0;
+    padding: 30px;
+    text-align: center;
+    overflow: hidden;
+}
+
+/* ===== 像素落雪 Canvas ===== */
+#pixelSnow {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ===== 主內容層 ===== */
+.app {
+    position: relative;
+    z-index: 1;
+}
+
+h1 {
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+/* ===== 廠商按鈕 ===== */
+.mode-buttons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.mode-buttons button {
+    flex: 1;
+    font-size: 18px;
+    padding: 14px 0;
+    border-radius: 14px;
+    border: 1px solid #1c1c1e;
+    background: #111114;
+    color: #8e8e93;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.3s ease;
+    touch-action: manipulation;
+}
+
+.mode-buttons button.pressed {
+    transform: scale(0.95);
+}
+
+/* ===== 深藍紫科幻呼吸燈 ===== */
+@keyframes sciPulse {
+    0% {
+        box-shadow:
+            0 0 6px rgba(90, 80, 255, 0.35),
+            0 0 14px rgba(140, 90, 255, 0.25);
+    }
+    50% {
+        box-shadow:
+            0 0 26px rgba(120, 100, 255, 0.9),
+            0 0 52px rgba(170, 120, 255, 0.6);
+    }
+    100% {
+        box-shadow:
+            0 0 6px rgba(90, 80, 255, 0.35),
+            0 0 14px rgba(140, 90, 255, 0.25);
+    }
+}
+
+.mode-buttons button.active {
+    background: linear-gradient(135deg, #1b1f6b, #4b2a8f);
+    color: #fff;
+    font-weight: 700;
+    border: 1px solid rgba(150, 120, 255, 0.85);
+    animation: sciPulse 1.8s infinite ease-in-out;
+    transform: scale(1.05);
+}
+
+/* ===== 輸入框 ===== */
+input {
+    width: 90%;
+    font-size: 36px;
+    padding: 14px;
+    text-align: center;
+    border-radius: 14px;
+    border: none;
+    background: #1c1c1e;
+    color: #fff;
+    outline: none;
+}
+
+/* ===== 結果 ===== */
+.result {
+    margin-top: 35px;
+    font-size: 46px;
+    font-weight: 700;
+}
+
+/* ===== 清除按鈕 ===== */
+.clear-btn {
+    margin-top: 25px;
+    width: 90%;
+    font-size: 20px;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    background: #2c2c2e;
+    color: #fff;
+    transition: transform 0.12s ease;
+}
+
+.clear-btn.pressed {
+    transform: scale(0.95);
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="pixelSnow"></canvas>
+
+<div class="app">
+    <h1>點數換算器</h1>
+
+    <div class="mode-buttons">
+        <button id="xinyu">新育聖</button>
+        <button id="taixin">泰新</button>
+        <button id="normal">一般</button>
+    </div>
+
+    <input
+        type="tel"
+        pattern="[0-9]*"
+        id="amount"
+        placeholder="輸入金額"
+        oninput="calculate()"
+    />
+
+    <div class="result" id="result">點數：0</div>
+
+    <button class="clear-btn" id="clearBtn">清除</button>
+</div>
+
+<script>
+/* ===== 模式邏輯 ===== */
+let mode = 'xinyu';
+
+document.querySelectorAll('.mode-buttons button, .clear-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', () => btn.classList.add('pressed'));
+    btn.addEventListener('pointerup', () => btn.classList.remove('pressed'));
+    btn.addEventListener('pointerleave', () => btn.classList.remove('pressed'));
+});
+
+document.getElementById('xinyu').onclick = () => setMode('xinyu');
+document.getElementById('taixin').onclick = () => setMode('taixin');
+document.getElementById('normal').onclick = () => setMode('normal');
+
+function setMode(m) {
+    mode = m;
+    document.querySelectorAll('.mode-buttons button')
+        .forEach(btn => btn.classList.remove('active'));
+    document.getElementById(m).classList.add('active');
+    calculate();
+}
+
+function getMultiplier(value) {
+    if (value <= 50) return 22;
+    if (value <= 100) return 20;
+    return 17;
+}
+
+function calculate() {
+    const value = parseInt(amount.value, 10);
+    if (!value) {
+        result.innerText = '點數：0';
+        return;
+    }
+    const multiplier = getMultiplier(value);
+    const points = (mode === 'xinyu') ? (value / 2) * multiplier : value * multiplier;
+    result.innerText = '點數：' + Math.floor(points);
+}
+
+clearBtn.onclick = () => {
+    amount.value = '';
+    result.innerText = '點數：0';
+    amount.focus();
+};
+
+setMode('xinyu');
+
+/* ===== 像素級落雪（科幻粒子） ===== */
+const canvas = document.getElementById('pixelSnow');
+const ctx = canvas.getContext('2d');
+let w, h;
+
+function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const particles = Array.from({ length: 120 }, () => ({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    speed: 0.3 + Math.random() * 0.7,
+    size: Math.random() < 0.7 ? 1 : 2,
+    alpha: 0.2 + Math.random() * 0.5
+}));
+
+function draw() {
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+        ctx.fillStyle = `rgba(180,160,255,${p.alpha})`;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        p.y += p.speed;
+        if (p.y > h) {
+            p.y = -5;
+            p.x = Math.random() * w;
+        }
+    });
+    requestAnimationFrame(draw);
+}
+draw();
+</script>
+
+</body>
+</html>
