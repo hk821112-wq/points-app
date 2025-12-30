@@ -6,7 +6,6 @@
 <title>點數換算器</title>
 
 <style>
-/* ===== 基本樣式 ===== */
 body {
     font-family: -apple-system, BlinkMacSystemFont;
     background: #000;
@@ -17,7 +16,6 @@ body {
     overflow: hidden;
 }
 
-/* ===== 像素落雪 Canvas ===== */
 #pixelSnow {
     position: fixed;
     inset: 0;
@@ -25,7 +23,6 @@ body {
     pointer-events: none;
 }
 
-/* ===== 主內容層 ===== */
 .app {
     position: relative;
     z-index: 1;
@@ -36,7 +33,6 @@ h1 {
     font-weight: 600;
 }
 
-/* ===== 廠商按鈕 ===== */
 .mode-buttons {
     display: flex;
     gap: 12px;
@@ -45,7 +41,7 @@ h1 {
 
 .mode-buttons button {
     flex: 1;
-    font-size: 18px;
+    font-size: 16px;
     padding: 14px 0;
     border-radius: 14px;
     border: 1px solid #1c1c1e;
@@ -60,35 +56,21 @@ h1 {
     transform: scale(0.95);
 }
 
-/* ===== 深藍紫科幻呼吸燈 ===== */
 @keyframes sciPulse {
-    0% {
-        box-shadow:
-            0 0 6px rgba(90, 80, 255, 0.35),
-            0 0 14px rgba(140, 90, 255, 0.25);
-    }
-    50% {
-        box-shadow:
-            0 0 26px rgba(120, 100, 255, 0.9),
-            0 0 52px rgba(170, 120, 255, 0.6);
-    }
-    100% {
-        box-shadow:
-            0 0 6px rgba(90, 80, 255, 0.35),
-            0 0 14px rgba(140, 90, 255, 0.25);
-    }
+    0% { box-shadow: 0 0 6px rgba(90,80,255,.35),0 0 14px rgba(140,90,255,.25); }
+    50% { box-shadow: 0 0 26px rgba(120,100,255,.9),0 0 52px rgba(170,120,255,.6); }
+    100% { box-shadow: 0 0 6px rgba(90,80,255,.35),0 0 14px rgba(140,90,255,.25); }
 }
 
 .mode-buttons button.active {
     background: linear-gradient(135deg, #1b1f6b, #4b2a8f);
     color: #fff;
     font-weight: 700;
-    border: 1px solid rgba(150, 120, 255, 0.85);
+    border: 1px solid rgba(150,120,255,.85);
     animation: sciPulse 1.8s infinite ease-in-out;
     transform: scale(1.05);
 }
 
-/* ===== 輸入框 ===== */
 input {
     width: 90%;
     font-size: 36px;
@@ -101,14 +83,12 @@ input {
     outline: none;
 }
 
-/* ===== 結果 ===== */
 .result {
     margin-top: 35px;
     font-size: 46px;
     font-weight: 700;
 }
 
-/* ===== 清除按鈕 ===== */
 .clear-btn {
     margin-top: 25px;
     width: 90%;
@@ -118,7 +98,6 @@ input {
     border: none;
     background: #2c2c2e;
     color: #fff;
-    transition: transform 0.12s ease;
 }
 
 .clear-btn.pressed {
@@ -135,27 +114,19 @@ input {
     <h1>點數換算器</h1>
 
     <div class="mode-buttons">
-        <button id="xinyu">新育聖</button>
-        <button id="taixin">泰新</button>
-        <button id="normal">一般</button>
+        <button id="order">新育聖-貨單</button>
+        <button id="sticker">新育聖-貼紙</button>
+        <button id="other">其他</button>
     </div>
 
-    <input
-        type="tel"
-        pattern="[0-9]*"
-        id="amount"
-        placeholder="輸入金額"
-        oninput="calculate()"
-    />
+    <input type="tel" pattern="[0-9]*" id="amount" placeholder="輸入金額" oninput="calculate()">
 
     <div class="result" id="result">點數：0</div>
-
     <button class="clear-btn" id="clearBtn">清除</button>
 </div>
 
 <script>
-/* ===== 模式邏輯 ===== */
-let mode = 'xinyu';
+let mode = 'order';
 
 document.querySelectorAll('.mode-buttons button, .clear-btn').forEach(btn => {
     btn.addEventListener('pointerdown', () => btn.classList.add('pressed'));
@@ -163,32 +134,36 @@ document.querySelectorAll('.mode-buttons button, .clear-btn').forEach(btn => {
     btn.addEventListener('pointerleave', () => btn.classList.remove('pressed'));
 });
 
-document.getElementById('xinyu').onclick = () => setMode('xinyu');
-document.getElementById('taixin').onclick = () => setMode('taixin');
-document.getElementById('normal').onclick = () => setMode('normal');
+order.onclick = () => setMode('order');
+sticker.onclick = () => setMode('sticker');
+other.onclick = () => setMode('other');
 
 function setMode(m) {
     mode = m;
-    document.querySelectorAll('.mode-buttons button')
-        .forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.mode-buttons button').forEach(b => b.classList.remove('active'));
     document.getElementById(m).classList.add('active');
     calculate();
 }
 
-function getMultiplier(value) {
-    if (value <= 50) return 22;
-    if (value <= 100) return 20;
+function getMultiplier(v) {
+    if (v <= 50) return 22;
+    if (v <= 100) return 20;
     return 17;
 }
 
 function calculate() {
-    const value = parseInt(amount.value, 10);
-    if (!value) {
+    const v = parseInt(amount.value, 10);
+    if (!v) {
         result.innerText = '點數：0';
         return;
     }
-    const multiplier = getMultiplier(value);
-    const points = (mode === 'xinyu') ? (value / 2) * multiplier : value * multiplier;
+
+    const m = getMultiplier(v);
+    let points = 0;
+
+    if (mode === 'order') points = (v / 3) * m;
+    else points = v * m;
+
     result.innerText = '點數：' + Math.floor(points);
 }
 
@@ -198,42 +173,26 @@ clearBtn.onclick = () => {
     amount.focus();
 };
 
-setMode('xinyu');
+setMode('order');
 
-/* ===== 像素級落雪（科幻粒子） ===== */
-const canvas = document.getElementById('pixelSnow');
-const ctx = canvas.getContext('2d');
-let w, h;
+/* 粒子背景 */
+const canvas = pixelSnow, ctx = canvas.getContext('2d');
+let w,h;
+function resize(){w=canvas.width=innerWidth;h=canvas.height=innerHeight}
+addEventListener('resize',resize);resize();
 
-function resize() {
-    w = canvas.width = window.innerWidth;
-    h = canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
+const ps=[...Array(120)].map(()=>({x:Math.random()*w,y:Math.random()*h,s:.3+Math.random()*.7,a:.2+Math.random()*.5,z:Math.random()<.7?1:2}));
 
-const particles = Array.from({ length: 120 }, () => ({
-    x: Math.random() * w,
-    y: Math.random() * h,
-    speed: 0.3 + Math.random() * 0.7,
-    size: Math.random() < 0.7 ? 1 : 2,
-    alpha: 0.2 + Math.random() * 0.5
-}));
-
-function draw() {
-    ctx.clearRect(0, 0, w, h);
-    particles.forEach(p => {
-        ctx.fillStyle = `rgba(180,160,255,${p.alpha})`;
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-        p.y += p.speed;
-        if (p.y > h) {
-            p.y = -5;
-            p.x = Math.random() * w;
-        }
+(function draw(){
+    ctx.clearRect(0,0,w,h);
+    ps.forEach(p=>{
+        ctx.fillStyle=`rgba(180,160,255,${p.a})`;
+        ctx.fillRect(p.x,p.y,p.z,p.z);
+        p.y+=p.s;
+        if(p.y>h){p.y=-5;p.x=Math.random()*w;}
     });
     requestAnimationFrame(draw);
-}
-draw();
+})();
 </script>
 
 </body>
