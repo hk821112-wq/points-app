@@ -35,20 +35,20 @@ h1 {
 
 .mode-buttons {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 30px;
 }
 
 .mode-buttons button {
     flex: 1;
-    font-size: 16px;
+    font-size: 15px;
     padding: 14px 0;
     border-radius: 14px;
     border: 1px solid #1c1c1e;
     background: #111114;
     color: #8e8e93;
     cursor: pointer;
-    transition: transform 0.12s ease, box-shadow 0.3s ease;
+    transition: transform .12s ease, box-shadow .3s ease;
     touch-action: manipulation;
 }
 
@@ -63,17 +63,134 @@ h1 {
 }
 
 .mode-buttons button.active {
-    background: linear-gradient(135deg, #1b1f6b, #4b2a8f);
-    color: #fff;
-    font-weight: 700;
-    border: 1px solid rgba(150,120,255,.85);
-    animation: sciPulse 1.8s infinite ease-in-out;
-    transform: scale(1.05);
+    background: linear-gradient(135deg,#1b1f6b,#4b2a8f);
+    color:#fff;
+    font-weight:700;
+    border:1px solid rgba(150,120,255,.85);
+    animation:sciPulse 1.8s infinite ease-in-out;
+    transform:scale(1.05);
 }
 
 input {
-    width: 90%;
-    font-size: 36px;
+    width:90%;
+    font-size:36px;
+    padding:14px;
+    text-align:center;
+    border-radius:14px;
+    border:none;
+    background:#1c1c1e;
+    color:#fff;
+    outline:none;
+}
+
+.result {
+    margin-top:35px;
+    font-size:46px;
+    font-weight:700;
+}
+
+.clear-btn {
+    margin-top:25px;
+    width:90%;
+    font-size:20px;
+    padding:14px;
+    border-radius:14px;
+    border:none;
+    background:#2c2c2e;
+    color:#fff;
+}
+.clear-btn.pressed { transform:scale(.95); }
+</style>
+</head>
+
+<body>
+
+<canvas id="pixelSnow"></canvas>
+
+<div class="app">
+    <h1>點數換算器</h1>
+
+    <div class="mode-buttons">
+        <button id="order">新育聖-貨單</button>
+        <button id="sticker">新育聖-貼紙</button>
+        <button id="taixin">泰新</button>
+        <button id="other">其他</button>
+    </div>
+
+    <input type="tel" pattern="[0-9]*" id="amount" placeholder="輸入金額" oninput="calculate()">
+
+    <div class="result" id="result">點數：0</div>
+    <button class="clear-btn" id="clearBtn">清除</button>
+</div>
+
+<script>
+let mode = 'order';
+
+document.querySelectorAll('.mode-buttons button,.clear-btn').forEach(btn=>{
+    btn.addEventListener('pointerdown',()=>btn.classList.add('pressed'));
+    btn.addEventListener('pointerup',()=>btn.classList.remove('pressed'));
+    btn.addEventListener('pointerleave',()=>btn.classList.remove('pressed'));
+});
+
+order.onclick   = ()=>setMode('order');
+sticker.onclick = ()=>setMode('sticker');
+taixin.onclick  = ()=>setMode('taixin');
+other.onclick   = ()=>setMode('other');
+
+function setMode(m){
+    mode=m;
+    document.querySelectorAll('.mode-buttons button').forEach(b=>b.classList.remove('active'));
+    document.getElementById(m).classList.add('active');
+    calculate();
+}
+
+function getMultiplier(v){
+    if(v<=50) return 22;
+    if(v<=99) return 20;
+    return 17;
+}
+
+function calculate(){
+    const v=parseInt(amount.value,10);
+    if(!v){ result.innerText='點數：0'; return; }
+
+    const m=getMultiplier(v);
+    let p=0;
+
+    if(mode==='order')      p=(v/3)*m;
+    else if(mode==='taixin')p=(v/2)*m;
+    else                    p=v*m;
+
+    result.innerText='點數：'+Math.floor(p);
+}
+
+clearBtn.onclick=()=>{
+    amount.value='';
+    result.innerText='點數：0';
+    amount.focus();
+};
+
+setMode('order');
+
+/* 粒子背景 */
+const c=pixelSnow,x=c.getContext('2d');let w,h;
+function r(){w=c.width=innerWidth;h=c.height=innerHeight}
+addEventListener('resize',r);r();
+const ps=[...Array(120)].map(()=>({x:Math.random()*w,y:Math.random()*h,s:.3+Math.random()*.7,a:.2+Math.random()*.5,z:Math.random()<.7?1:2}));
+(function d(){
+    x.clearRect(0,0,w,h);
+    ps.forEach(p=>{
+        x.fillStyle=`rgba(180,160,255,${p.a})`;
+        x.fillRect(p.x,p.y,p.z,p.z);
+        p.y+=p.s;
+        if(p.y>h){p.y=-5;p.x=Math.random()*w;}
+    });
+    requestAnimationFrame(d);
+})();
+</script>
+
+</body>
+</html>
     padding: 14px;
     text-align: center;
     border-radius: 14px;
@@ -197,3 +314,4 @@ const ps=[...Array(120)].map(()=>({x:Math.random()*w,y:Math.random()*h,s:.3+Math
 
 </body>
 </html>
+
