@@ -144,6 +144,20 @@ function setMode(m){
     calculate();
 }
 
+/*
+  更正後：泰新倍率判斷要以 (金額/2) 的結果來分段：
+  (金額/2) 得出來的數字
+  1~50  -> ×22
+  51~99 -> ×20
+  100+  -> ×17
+*/
+function getTaixinMultiplier(halfValue){
+    if(halfValue <= 50) return 22;
+    if(halfValue <= 99) return 20;
+    return 17;
+}
+
+// 其他模式仍維持原本以「金額 v」分段的倍率規則
 function getMultiplier(v){
     if(v<=50) return 22;
     if(v<=99) return 20;
@@ -151,17 +165,22 @@ function getMultiplier(v){
 }
 
 function calculate(){
-    const v=parseInt(amount.value,10);
+    const v = parseInt(amount.value, 10);
     if(!v){ result.innerText='點數：0'; return; }
 
-    const m=getMultiplier(v);
-    let p=0;
+    let p = 0;
 
-    if(mode==='order')      p=(v/3)*m;
-    else if(mode==='taixin')p=(v/2)*m;
-    else                    p=v*m;
+    if(mode==='taixin'){
+        const half = v / 2;
+        const m = getTaixinMultiplier(half);
+        p = half * m;
+    } else {
+        const m = getMultiplier(v);
+        if(mode==='order')      p = (v/3) * m;
+        else                    p = v * m; // sticker / other
+    }
 
-    result.innerText='點數：'+Math.floor(p);
+    result.innerText='點數：' + Math.floor(p);
 }
 
 clearBtn.onclick=()=>{
