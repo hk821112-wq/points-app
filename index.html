@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+<meta name="app-version" content="2024.02.01.1">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>點數換算器</title>
@@ -131,7 +132,24 @@ input {
 </div>
 
 <script>
-let packDivisor = 0; // 0 = 未啟用，8 或 12 = 啟用
+/* ===== 版本檢查（iPhone 桌面捷徑用）===== */
+(function () {
+    const currentVersion = document
+        .querySelector('meta[name="app-version"]')
+        ?.content;
+
+    const savedVersion = localStorage.getItem('app-version');
+
+    if (savedVersion && savedVersion !== currentVersion) {
+        localStorage.setItem('app-version', currentVersion);
+        location.reload(true); // 強制重新載入
+    } else {
+        localStorage.setItem('app-version', currentVersion);
+    }
+})();
+/* ===== 版本檢查結束 ===== */
+
+let packDivisor = 0; // 包裝數量（9 / 12 / 16 / 24）
 let mode = 'order';
 
 document.querySelectorAll('.mode-buttons button,.clear-btn').forEach(btn=>{
@@ -148,13 +166,12 @@ other.onclick   = ()=>setMode('other');
 function setMode(m){
     mode = m;
 
-    // 清掉所有模式按鈕狀態
     document.querySelectorAll('.mode-buttons button')
         .forEach(b => b.classList.remove('active'));
 
     document.getElementById(m).classList.add('active');
 
-    // ⭐ 不管切到哪個模式，都自動取消包裝數量
+    // ⭐ 切模式 → 一定清包裝
     packDivisor = 0;
     document.querySelectorAll('.pack-btn')
         .forEach(b => b.classList.remove('active'));
@@ -162,13 +179,11 @@ function setMode(m){
     calculate();
 }
 
-
-// ===== 包裝數量（9 / 12 / 16 / 24）通用邏輯 =====
+// ===== 包裝數量通用邏輯 =====
 document.querySelectorAll('.pack-btn').forEach(btn => {
     btn.onclick = () => {
         const n = parseInt(btn.dataset.pack, 10);
 
-        // 再點同一個 → 取消
         if (packDivisor === n) {
             packDivisor = 0;
             document.querySelectorAll('.pack-btn')
@@ -187,49 +202,37 @@ document.querySelectorAll('.pack-btn').forEach(btn => {
     };
 });
 
-
-/*
-  更正後：泰新倍率判斷要以 (金額/2) 的結果來分段：
-  (金額/2) 得出來的數字
-  1~50  -> ×22
-  51~99 -> ×20
-  100+  -> ×17
-*/
-function getTaixinMultiplier(halfValue){
-    if(halfValue <= 50) return 22;
-    if(halfValue <= 99) return 20;
+function getTaixinMultiplier(v){
+    if(v <= 50) return 22;
+    if(v <= 99) return 20;
     return 17;
 }
 
-// 其他模式仍維持原本以「金額 v」分段的倍率規則
 function getMultiplier(v){
-    if(v<=50) return 22;
-    if(v<=99) return 20;
+    if(v <= 50) return 22;
+    if(v <= 99) return 20;
     return 17;
 }
 
 function calculate(){
     let v = parseInt(amount.value, 10);
-    if(!v){ 
-        result.innerText='點數：0'; 
-        return; 
+    if(!v){
+        result.innerText='點數：0';
+        return;
     }
 
-    // ✅ 若有選 8 個 或 12 個，先除
     if(packDivisor){
         v = v / packDivisor;
     }
 
     let p = 0;
 
-    if(mode==='taixin'){
+    if(mode === 'taixin'){
         const half = v / 2;
-        const m = getTaixinMultiplier(half);
-        p = half * m;
+        p = half * getTaixinMultiplier(half);
     } else {
         const m = getMultiplier(v);
-        if(mode==='order')      p = (v/3) * m;
-        else                    p = v * m; // sticker / other
+        p = (mode === 'order') ? (v/3)*m : v*m;
     }
 
     result.innerText='點數：' + Math.floor(p);
