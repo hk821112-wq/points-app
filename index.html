@@ -117,6 +117,13 @@ input {
         <button id="other">其他</button>
     </div>
 
+<div class="mode-buttons" style="margin-top:-10px;">
+    <button class="pack-btn" data-pack="9">9 個</button>
+    <button class="pack-btn" data-pack="12">12 個</button>
+    <button class="pack-btn" data-pack="16">16 個</button>
+    <button class="pack-btn" data-pack="24">24 個</button>
+</div>
+
     <input type="tel" pattern="[0-9]*" id="amount" placeholder="輸入金額" oninput="calculate()">
 
     <div class="result" id="result">點數：0</div>
@@ -124,6 +131,7 @@ input {
 </div>
 
 <script>
+let packDivisor = 0; // 0 = 未啟用，8 或 12 = 啟用
 let mode = 'order';
 
 document.querySelectorAll('.mode-buttons button,.clear-btn').forEach(btn=>{
@@ -138,11 +146,47 @@ taixin.onclick  = ()=>setMode('taixin');
 other.onclick   = ()=>setMode('other');
 
 function setMode(m){
-    mode=m;
-    document.querySelectorAll('.mode-buttons button').forEach(b=>b.classList.remove('active'));
+    mode = m;
+
+    // 清掉所有模式按鈕狀態
+    document.querySelectorAll('.mode-buttons button')
+        .forEach(b => b.classList.remove('active'));
+
     document.getElementById(m).classList.add('active');
+
+    // ⭐ 不管切到哪個模式，都自動取消包裝數量
+    packDivisor = 0;
+    document.querySelectorAll('.pack-btn')
+        .forEach(b => b.classList.remove('active'));
+
     calculate();
 }
+
+
+// ===== 包裝數量（9 / 12 / 16 / 24）通用邏輯 =====
+document.querySelectorAll('.pack-btn').forEach(btn => {
+    btn.onclick = () => {
+        const n = parseInt(btn.dataset.pack, 10);
+
+        // 再點同一個 → 取消
+        if (packDivisor === n) {
+            packDivisor = 0;
+            document.querySelectorAll('.pack-btn')
+                .forEach(b => b.classList.remove('active'));
+        } else {
+            packDivisor = n;
+            document.querySelectorAll('.pack-btn')
+                .forEach(b =>
+                    b.classList.toggle(
+                        'active',
+                        parseInt(b.dataset.pack, 10) === n
+                    )
+                );
+        }
+        calculate();
+    };
+});
+
 
 /*
   更正後：泰新倍率判斷要以 (金額/2) 的結果來分段：
@@ -165,8 +209,16 @@ function getMultiplier(v){
 }
 
 function calculate(){
-    const v = parseInt(amount.value, 10);
-    if(!v){ result.innerText='點數：0'; return; }
+    let v = parseInt(amount.value, 10);
+    if(!v){ 
+        result.innerText='點數：0'; 
+        return; 
+    }
+
+    // ✅ 若有選 8 個 或 12 個，先除
+    if(packDivisor){
+        v = v / packDivisor;
+    }
 
     let p = 0;
 
@@ -210,3 +262,4 @@ const ps=[...Array(120)].map(()=>({x:Math.random()*w,y:Math.random()*h,s:.3+Math
 
 </body>
 </html>
+
